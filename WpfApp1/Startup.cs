@@ -123,7 +123,7 @@ namespace WpfApp1
             //注册通过Export注解的类
             this.ConfigureExportServices(services);
 
-            //services.AddSingleton(this._appConfig.MainWindow);
+            services.AddSingleton(this._appConfig.MainWindow);
 
             //注册其他类
             //services.AddSingleton<IAdbServer>(_ => AdbServer.Instance);

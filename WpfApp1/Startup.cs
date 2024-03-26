@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Text;
@@ -9,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using Serilog.Core;
 using WpfApp1.Common;
 using WpfApp1.Database;
 using WpfApp1.Models;
@@ -121,8 +123,18 @@ namespace WpfApp1
         protected virtual void ConfigureServices(IServiceCollection services)
         {
             //注册通过Export注解的类
+            try
+            {
             this.ConfigureExportServices(services);
 
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            services.AddSingleton<MainWindowViewModel>();
+            services.AddSingleton<WebApiService>();
+            
             services.AddSingleton(this._appConfig.MainWindow);
 
             //注册其他类

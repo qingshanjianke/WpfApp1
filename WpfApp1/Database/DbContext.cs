@@ -55,7 +55,7 @@ namespace WpfApp1.Database
             var types = assemblyList.Select(q => q.GetTypes()).SelectMany(q => q).Where(q => typeof(ICreateTable).IsAssignableFrom(q) && !q.IsAbstract).ToArray();
             this.CodeFirst.InitTables(types);
         }
-        //public DbSet<GlobalSetting> GlobalSetting => new(this);
+        public DbSet<Plu> GlobalSetting => new(this);
         //public DbSet<PhoneGroup> PhoneGroup => new(this);
         //public DbSet<Phone> Phone => new(this);
         //public DbSet<DeviceBattery> DeviceBattery => new(this);

@@ -34,6 +34,7 @@ namespace WpfApp1.Common
                 action(item);
             }
         }
+
         public static string Join<T>(this IEnumerable<T> obj, string split)
         {
             return string.Join(split, obj);

@@ -9,7 +9,7 @@
         /// <summary>
         /// 注册的类型
         /// </summary>
-        public Type RegisterType;
+        public Type? RegisterType;
     }
 
     public enum DependencyType

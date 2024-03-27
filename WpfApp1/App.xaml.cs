@@ -15,11 +15,10 @@ namespace WpfApp1
         {
             await new Startup(new ApplicationConfig
             {
-                Title = "光年KOL挖掘沟通系统(RPA版)",
+                Title = "VIV零售",
                 Version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(),
                 ProductName = Path.GetFileNameWithoutExtension(Assembly.GetExecutingAssembly().Location),
-                ServiceName = ApplicationConstants.KOL,
-                MainWindow = typeof(MainWindow)
+                ServiceName = ApplicationConstants.KOL
             }).Run();
         }
     }

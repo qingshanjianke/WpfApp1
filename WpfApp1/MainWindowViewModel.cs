@@ -1,22 +1,15 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
-using RpaClient.DouYin.WebServices;
 using WpfApp1.Common;
 
 namespace WpfApp1
 {
     [Export]
-    public partial class MainWindowViewModel : ObservableObject
+    public partial class MainWindowViewModel(ILogger<MainWindowViewModel> logger, WebApiService webServices) : ObservableObject
     {
-        private readonly WebApiService webServices;
-        private ILogger<MainWindowViewModel> logger;
-
-        public MainWindowViewModel(ILogger<MainWindowViewModel> logger, WebApiService webServices)
-        {
-            this.logger = logger;
-            this.webServices = webServices;
-        }
+        private readonly WebApiService webServices = webServices;
+        private readonly ILogger<MainWindowViewModel> logger = logger;
 
         [RelayCommand]
         private async Task OpenServices()
@@ -24,10 +17,9 @@ namespace WpfApp1
             this.logger.LogInformation("实打实打算");
             CancellationTokenSource cts = new CancellationTokenSource();
 
-            var args = System.Environment.GetCommandLineArgs();
-            var port = 18001;
+            var args = Environment.GetCommandLineArgs();
 
-            await webServices.StartAsync(port, args, cts.Token);
+            await webServices.StartAsync( args, cts.Token);
         }
     }
 }

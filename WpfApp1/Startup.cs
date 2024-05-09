@@ -2,27 +2,26 @@
 using System.Reflection;
 using System.Text;
 using System.Windows;
-using CommunityToolkit.Mvvm.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using CommunityToolkit.Mvvm.DependencyInjection;
 using Serilog;
+using Serilog.Enrichers;
 using WpfApp1.Common;
 using WpfApp1.Models;
 
 namespace WpfApp1
 {
-
     public class Startup
     {
-        private readonly List<Assembly> _assemblyList;
         private readonly ApplicationConfig _appConfig;
-
+        private readonly List<Assembly> _assemblyList;
         public Startup(ApplicationConfig appConfig)
         {
             _appConfig = appConfig;
-            _assemblyList = Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory, "WpfApp1.dll", SearchOption.TopDirectoryOnly)
+            _assemblyList = Directory
+                .GetFiles(AppDomain.CurrentDomain.BaseDirectory, "WpfApp1.dll", SearchOption.TopDirectoryOnly)
                 .Select(Assembly.LoadFrom)
                 .ToList();
         }
@@ -45,18 +44,19 @@ namespace WpfApp1
                 {
                     builder.AddJsonFile("appsettings.Development.json", true, true);
                 })
-                .ConfigureServices((context, services) => { ConfigureServices(services); })
-                .ConfigureLogging(ConfigureLogSystem)
+                .ConfigureServices((context, services) =>
+                {
+                    ConfigureServices(services);
+                })
                 .Build();
-
 
             Ioc.Default.ConfigureServices(host.Services);
 
-            var logger = host.Services.GetRequiredService<ILogger<Startup>>();
+            var logger = host.Services.GetRequiredService<ILogger>();
 
             try
             {
-                logger.LogInformation("应用启动");
+                logger.Information("应用启动", nameof(Startup));
 
                 //检查更新
                 //await host.Services.GetRequiredService<UpdateWindowViewModel>().Check();
@@ -84,17 +84,18 @@ namespace WpfApp1
             }
             catch (Exception exception)
             {
-                logger.LogError(exception, "程序执行过程中发生错误");
+                logger.Error(exception, "程序执行过程中发生错误");
 
                 Environment.Exit(1);
             }
         }
 
 
+
         /// <summary>
         ///     主窗口关闭后调用
         /// </summary>
-        protected virtual async Task PostRunActionAsync(IHost host, ILogger<Startup> logger, CancellationToken stopingToken = default)
+        protected virtual async Task PostRunActionAsync(IHost host, ILogger logger, CancellationToken stopingToken = default)
         {
             await Task.CompletedTask;
         }
@@ -102,13 +103,59 @@ namespace WpfApp1
         /// <summary>
         ///     主窗口显示前调用
         /// </summary>
-        protected virtual async Task PreRunActionAsync(IHost host, ILogger<Startup> logger, CancellationToken stoppingToken = default)
+        protected virtual async Task PreRunActionAsync(IHost host, ILogger logger, CancellationToken stoppingToken = default)
         {
             await Task.CompletedTask;
         }
 
+        private void ConfigureExportServices(IServiceCollection services)
+        {
+            //获取程序集中需要注入的类
+            _assemblyList
+                .Select(q => q.GetTypes())
+                .SelectMany(q => q)
+                .ForEach(type =>
+                {
+                    //获取类注解
+                    var attribute = type.GetCustomAttribute<ExportAttribute>();
+                    if (attribute == null || type.IsAbstract || type.IsInterface)
+                    {
+                        return;
+                    }
+
+                    var registerType = attribute.RegisterType ?? type;
+                    if (attribute.Type == DependencyType.Singleton)
+                    {
+                        services.AddSingleton(registerType, type);
+                    }
+
+                    if (attribute.Type == DependencyType.Scoped)
+                    {
+                        services.AddScoped(registerType, type);
+                    }
+
+                    if (attribute.Type == DependencyType.Transient)
+                    {
+                        services.AddTransient(registerType, type);
+                    }
+                });
+        }
+
         protected virtual void ConfigureServices(IServiceCollection services)
         {
+            _ = services.AddSingleton<ILogger>(_ =>
+            new LoggerConfiguration()
+            .MinimumLevel.Information()
+            .Enrich.FromLogContext()
+            .Enrich.WithThreadId()
+            .WriteTo.File(
+                 $"{_appConfig.LogPath}\\log.log",
+                 rollOnFileSizeLimit: true,
+                 rollingInterval: RollingInterval.Day,
+                 retainedFileCountLimit: 15,
+                 outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] [{ThreadId}] [{SourceContext}] {Message:lj}{NewLine}{Exception}")
+            .CreateLogger());
+
             //注册通过Export注解的类
             ConfigureExportServices(services);
 
@@ -121,33 +168,32 @@ namespace WpfApp1
         /// <summary>
         ///     配置日志系统
         /// </summary>
-        private void ConfigureLogSystem(HostBuilderContext builder, ILoggingBuilder logging)
-        {
-            {
-                Log.Logger = new LoggerConfiguration()
-                    .ReadFrom.Configuration(builder.Configuration)
-                    .Enrich.FromLogContext()
-                    .Enrich.WithThreadId()
-                    .Enrich.WithSourceContext()
-                    .WriteTo.File($"{_appConfig.LogPath}\\log.log",
-                        rollOnFileSizeLimit: true,
-                        rollingInterval: RollingInterval.Day,
-                        retainedFileCountLimit: 15,
-                        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] [{ThreadId}] [{SourceContext}] {Message:lj}{NewLine}{Exception}"
-                    )
-                    .CreateLogger();
+        //private void ConfigureLogSystem(HostBuilderContext builder, ILoggingBuilder logging)
+        //{
+        //    {
+        //        Log.Logger = new LoggerConfiguration()
+        //            .ReadFrom.Configuration(builder.Configuration)
+        //            .Enrich.FromLogContext()
+        //            .Enrich.WithThreadId()
+        //            .Enrich.WithSourceContext()
+        //            .WriteTo.File(
+        //            $"{_appConfig.LogPath}\\log.log",
+        //            rollOnFileSizeLimit: true,
+        //            rollingInterval: RollingInterval.Day,
+        //            retainedFileCountLimit: 15,
+        //            outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] [{ThreadId}] [{SourceContext}] {Message:lj}{NewLine}{Exception}")
+        //           .CreateLogger();
 
-
-                logging.SetMinimumLevel(LogLevel.Trace);
-                logging.ClearProviders();
-                logging.AddProvider(new CustomLoggerProvider());
-            }
-        }
+        //        logging.SetMinimumLevel(LogLevel.Trace);
+        //        logging.ClearProviders();
+        //        logging.AddProvider(new CustomLoggerProvider());
+        //    }
+        //}
 
         /// <summary>
         ///     执行主窗口
         /// </summary>
-        private async Task RunMainWindowAsync(IHost host, Microsoft.Extensions.Logging.ILogger logger, CancellationToken stoppingToken = default)
+        private async Task RunMainWindowAsync(IHost host, ILogger logger, CancellationToken stoppingToken = default)
         {
             //启动主界面
             if (host.Services.GetService(_appConfig.MainWindow) is Window mainWindow)
@@ -156,7 +202,7 @@ namespace WpfApp1
                 mainWindow.Closing += (s, e) => { };
 
                 //退出后的处理
-                mainWindow.Closed += (s, e) => logger.LogInformation("应用退出");
+                mainWindow.Closed += (s, e) => logger.Error("应用退出");
 
                 mainWindow.ShowDialog();
             }
@@ -166,36 +212,6 @@ namespace WpfApp1
             }
 
             await Task.CompletedTask;
-        }
-
-        private void ConfigureExportServices(IServiceCollection services)
-        {
-            //获取程序集中需要注入的类
-            _assemblyList.Select(q => q.GetTypes()).SelectMany(q => q).ForEach(type =>
-            {
-                //获取类注解
-                var attribute = type.GetCustomAttribute<ExportAttribute>();
-                if (attribute == null || type.IsAbstract || type.IsInterface)
-                {
-                    return;
-                }
-
-                var registerType = attribute.RegisterType ?? type;
-                if (attribute.Type == DependencyType.Singleton)
-                {
-                    services.AddSingleton(registerType, type);
-                }
-
-                if (attribute.Type == DependencyType.Scoped)
-                {
-                    services.AddScoped(registerType, type);
-                }
-
-                if (attribute.Type == DependencyType.Transient)
-                {
-                    services.AddTransient(registerType, type);
-                }
-            });
         }
     }
 }

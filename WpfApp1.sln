@@ -24,7 +24,7 @@ Global
 		RESX_SortFileContentOnSave = True
 		RESX_ConfirmAddLanguageFile = True
 		RESX_AutoCreateNewLanguageFiles = True
-		RESX_NeutralResourcesLanguage = zh-Hans
+		RESX_NeutralResourcesLanguage = zh-CN
 		SolutionGuid = {16F7D368-33E1-4F0F-A9C3-D90C3608D2C0}
 	EndGlobalSection
 EndGlobal

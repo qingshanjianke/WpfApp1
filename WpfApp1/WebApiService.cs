@@ -49,11 +49,16 @@ public class WebApiService : IAsyncDisposable, IDisposable
             });
         }
 
-        app.UseHttpsRedirection();
-        app.UseFileServer();
+        //1将文件放在项目目录下
+        //app.UseHttpsRedirection();
+        //app.UseFileServer();
+
+        //2将文件放在bin文件的wwwroot目录下
+        //app.UseDefaultFiles();
+        app.UseStaticFiles();
 
         app.MapControllers();
-        
+
         var lastApp = Interlocked.Exchange(ref lastWebApplication, app);
 
         await StopCoreAsync(lastApp);

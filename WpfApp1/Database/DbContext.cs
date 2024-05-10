@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using SqlSugar;
 using WpfApp1.Common;
@@ -61,6 +57,7 @@ namespace WpfApp1.Database
         //public DbSet<DeviceBattery> DeviceBattery => new(this);
         //public DbSet<Settings> Settings => new(this);
     }
+
 
 
     public class DbSet<T> : SimpleClient<T> where T : class, new()

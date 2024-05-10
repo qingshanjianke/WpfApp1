@@ -33,7 +33,6 @@ public class WebApiService : IAsyncDisposable, IDisposable
         builder.Services.AddSwaggerGen();
         builder.Logging.SetMinimumLevel(LogLevel.Trace);
         builder.Logging.ClearProviders();
-        builder.Logging.AddProvider(new CustomLoggerProvider());
 
         builder.Services.AddControllers();
         RegisterService(builder.Services);

@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System.Globalization;
+using System.IO;
 using System.Reflection;
 using System.Windows;
 using WpfApp1.Models;
@@ -13,6 +14,8 @@ namespace WpfApp1
     {
         protected override async void OnStartup(StartupEventArgs e)
         {
+            ChangeLanguage("en-US");
+            //ChangeLanguage("zh-CN");
             await new Startup(new ApplicationConfig
             {
                 Title = "VIV零售",
@@ -20,6 +23,13 @@ namespace WpfApp1
                 ProductName = Path.GetFileNameWithoutExtension(Assembly.GetExecutingAssembly().Location),
                 ServiceName = ApplicationConstants.KOL
             }).Run();
+        }
+
+        private void ChangeLanguage(string cultureName)
+        {
+            Thread.CurrentThread.CurrentCulture = new CultureInfo(cultureName);
+            Thread.CurrentThread.CurrentUICulture = new CultureInfo(cultureName);
+
         }
     }
 

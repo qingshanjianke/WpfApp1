@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:local="clr-namespace:WpfApp1"
+        xmlns:res="clr-namespace:WpfApp1.Resource"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         Title="MainWindow"
         Width="800"
@@ -10,9 +11,12 @@
         DataContext="{Binding MainWindowViewModel, Source={StaticResource ViewModelLocator}}"
         mc:Ignorable="d">
 	<Grid>
+		<TextBlock Text="{Binding TestName}">
+		</TextBlock>
 		<Button Width="80"
 		        Height="30"
 		        Command="{Binding OpenServicesCommand}"
-		        Content="打开服务" />
+		        Content="{x:Static res:Language.OpenService}" />
+
 	</Grid>
 </Window>

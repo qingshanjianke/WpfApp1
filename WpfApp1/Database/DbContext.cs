@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics;
+using System.IO;
 using System.Linq.Expressions;
 using System.Reflection;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using SqlSugar;
 using WpfApp1.Common;
@@ -11,12 +13,24 @@ namespace WpfApp1.Database
     [Export]
     public class DbContext : SqlSugarScope
     {
-        public DbContext(ILogger<DbContext> logger, ApplicationConfig applicationConfig, Action<SqlSugarClient>? configAction = null) : base(new ConnectionConfig()
+        private static string ConnectionString
         {
-            ConnectionString = "Data Source=" + applicationConfig.ProgramDataPath + "\\Data.db",
-            DbType = DbType.Sqlite,//设置数据库类型
-            IsAutoCloseConnection = true,//自动释放数据库，如果存在事务，在事务结束之后释放。
-            InitKeyType = InitKeyType.Attribute,//从实体特性中读取主键自增列信息
+            get
+            {
+                return new SqliteConnectionStringBuilder("DataSource=" + Path.Combine(AppConstants.ApplicationData, "SanQingNiao", "APP", "Data.db"))
+                {
+                    Mode = SqliteOpenMode.ReadWriteCreate,
+                    Password = "04UZ4LZLQqXObRSuNCZGTbTJ"
+                }.ToString();
+            }
+        }
+
+        public DbContext(ILogger logger, Action<SqlSugarClient>? configAction = null) : base(new ConnectionConfig()
+        {
+            ConnectionString = ConnectionString,
+            DbType = DbType.Sqlite,                 //设置数据库类型
+            IsAutoCloseConnection = true,           //自动释放数据库，如果存在事务，在事务结束之后释放。
+            InitKeyType = InitKeyType.Attribute,    //从实体特性中读取主键自增列信息
         }, a =>
         {
             Stopwatch stopwatch = null;
@@ -46,12 +60,20 @@ namespace WpfApp1.Database
         })
         {
         }
-        public void InitTables(List<Assembly> assemblyList)
+
+        public void InitTables()
         {
-            var types = assemblyList.Select(q => q.GetTypes()).SelectMany(q => q).Where(q => typeof(ICreateTable).IsAssignableFrom(q) && !q.IsAbstract).ToArray();
-            this.CodeFirst.InitTables(types);
+            this.CodeFirst.InitTables(typeof(SkuModel));
         }
-        public DbSet<Plu> GlobalSetting => new(this);
+
+        public DbSet<SkuModel> SkuModel => new(this);
+
+        //public void InitTables(List<Assembly> assemblyList)
+        //{
+        //    var types = assemblyList.Select(q => q.GetTypes()).SelectMany(q => q).Where(q => typeof(ICreateTable).IsAssignableFrom(q) && !q.IsAbstract).ToArray();
+        //    this.CodeFirst.InitTables(types);
+        //}
+        //public DbSet<Plu> GlobalSetting => new(this);
         //public DbSet<PhoneGroup> PhoneGroup => new(this);
         //public DbSet<Phone> Phone => new(this);
         //public DbSet<DeviceBattery> DeviceBattery => new(this);
